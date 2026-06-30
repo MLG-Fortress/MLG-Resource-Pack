@@ -6,6 +6,8 @@ on:
     paths-ignore:
       - '.gitignore'
       - '.gitattributes'
+      - 'README.md'
+      - '.github/**'
 
 
 jobs:
@@ -80,11 +82,7 @@ jobs:
           tag_name: latest
           name: Latest Resource Pack (${{ steps.date.outputs.date }})
           body: |
-            Automatically generated resource pack zip.
-            
-            Download link: https://github.com/${{ github.repository }}/releases/latest/download/${{ github.event.repository.name }}.zip
-            
-            This is the latest version of the pack, updated on every push to the main branch.
+            Automatically generated resource pack zip: https://github.com/${{ github.repository }}/releases/latest/download/${{ github.event.repository.name }}.zip
           files: ${{ github.event.repository.name }}.zip
           prerelease: false
           make_latest: true
