@@ -6,8 +6,7 @@ on:
     paths-ignore:
       - '.gitignore'
       - '.gitattributes'
-      - 'README.md'
-      - '.github/**'
+
 
 jobs:
   build-and-release:
