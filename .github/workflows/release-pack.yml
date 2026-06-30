@@ -75,7 +75,7 @@ jobs:
             }
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@main
+        uses: softprops/action-gh-release@master
         with:
           tag_name: latest
           name: Latest Resource Pack (${{ steps.date.outputs.date }})
