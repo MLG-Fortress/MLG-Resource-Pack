@@ -1,0 +1,93 @@
+name: Release Resource Pack
+
+on:
+  push:
+    branches: [master, main]
+    paths-ignore:
+      - '.gitignore'
+      - '.gitattributes'
+      - 'README.md'
+      - '.github/**'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create release zip with best compression
+        run: |
+          # Create a temporary directory for the zip
+          mkdir -p temp_pack
+          
+          # Copy only pack-related files (assets, pack.mcmeta, pack.png)
+          cp -r assets/ temp_pack/
+          cp pack.mcmeta temp_pack/
+          cp pack.png temp_pack/
+          
+          # Create zip with best compression (-9)
+          cd temp_pack
+          zip -9 -r ../Pack-O-MayMays.zip .
+          cd ..
+          
+          # Show the zip contents for verification
+          unzip -l Pack-O-MayMays.zip
+
+      - name: Get current date for release name
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+
+      - name: Delete existing 'latest' release and tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const releases = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+              
+              const latestRelease = releases.data.find(r => r.tag_name === 'latest');
+              if (latestRelease) {
+                console.log('Deleting existing latest release:', latestRelease.id);
+                await github.rest.repos.deleteRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: latestRelease.id
+                });
+                
+                // Delete the tag reference
+                await github.rest.git.deleteRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: 'tags/latest'
+                });
+              }
+            } catch (error) {
+              console.log('No existing latest release to delete:', error.message);
+            }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Resource Pack (${{ steps.date.outputs.date }})
+          body: |
+            Automatically generated resource pack zip.
+            
+            Download link: https://github.com/${{ github.repository }}/releases/latest/download/Pack-O-MayMays.zip
+            
+            This is the latest version of the pack, updated on every push to the main branch.
+          files: Pack-O-MayMays.zip
+          prerelease: false
+          make_latest: true
+
+      - name: Clean up temporary files
+        run: rm -rf temp_pack/ Pack-O-MayMays.zip
